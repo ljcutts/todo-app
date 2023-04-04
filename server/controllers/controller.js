@@ -1,43 +1,89 @@
-import express from "express";
-import mongoose from "mongoose";
-import { todoUser, todoUser } from "../models/model";
+//update(edit todo and mark complete/not completed)
+const mongoose = require("mongoose");
 
-const router = express.Router();
+let userTodoSchema = new mongoose.Schema({
+  username: String,
+  todo: [
+    {
+      description: String,
+      completed: Boolean,
+    },
+  ],
+});
+let todoUser = mongoose.model("todoUser", userTodoSchema);
 
-export const createTodo = async(req,res) => {
-  const {username, description} = req.body;
+const getTodos = async(req, res) => {
+  const {_username} = req.params;
+ 
+  const todos = await todoUser.findOne({ username: _username });
 
-  let newTodoUser = new todoUser({
-    username: username,
-    todo: [
-        {
-            description: description,
-            completed: false
-        }
-    ]
-  })
-
-   todoUser.findOne({username: username}, (err, data) => {
-    if(err) return err
-     if(!data) {
-        newTodoUser.save((err, data) => {
-           if(err) return err
-           res.send({username: username, todo: description})
-        })
-     } else {
-         User.findOneAndUpdate({username: username}, {$inc: {
-        count: 1
-    }, $push: {
-      "logs": {
-          description: description,
-          completed: false
-      }
-  }}, {new: true}, (err, data) => {
-     res.send({ username: username, todo: description});
-  })
-     }
-   })
+  res.status(200).json({todos})
 }
 
+const createTodo = async (req, res) => {
+  const { username, description } = req.body;
 
-export default router
+  const newTodoUser = new todoUser({
+    username: username,
+    todo: [
+      {
+        description: description,
+        completed: false,
+      },
+    ],
+  });
+
+  const userAvailable = await todoUser.findOne({username:username})
+
+  if(userAvailable !== null) {
+    await todoUser.findOneAndUpdate(
+       { username: username },
+       {
+         $inc: {
+           count: 1,
+         },
+         $push: {
+           "todo": {
+             description: description,
+             completed: false
+           },
+         },
+       },
+       { new: true }
+     );
+  } else  {
+    await newTodoUser.save();
+  }
+  
+  res.status(200).json({ username: username, todo: description });
+};
+
+const deleteTodo = async(req, res) => {
+  const { username, description, completion } = req.body;
+   await todoUser.updateOne(
+     { username: username },
+     {
+       $pull: {
+         "todo": {
+           description: description,
+           completed: completion
+         },
+       },
+     }
+   );
+
+   res.status(200).json({username: username, description: description, completed: completion})
+} 
+
+const updateTodo = async(req, res) => {
+  const {username, description, newDescription, completion} = req.body
+
+  await todoUser.updateOne(
+    { username: username, "todo.description": description },
+    { $set: { "todo.$.description": newDescription } }
+  );
+
+  res.status(200).json({username: username, description: newDescription, completed: completion});
+}
+
+module.exports = {createTodo, getTodos, deleteTodo};

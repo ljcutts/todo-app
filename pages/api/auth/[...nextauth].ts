@@ -4,7 +4,7 @@ import GoogleProvider from "next-auth/providers/google"
 import EmailProvider from "next-auth/providers/email"
 import GithubProvider from "next-auth/providers/github"
 import { MongoDBAdapter } from "@next-auth/mongodb-adapter";
-import {clientPromise, client} from "@/mongodb";
+//import {clientPromise, client} from "@/mongodb";
 import mongoose from "mongoose";
 //import express from "express";
 //import { ExpressAdapter } from "next-auth/express-adapter";
@@ -34,7 +34,7 @@ const providers = [
 // Configure NextAuth.js options
 const options = {
   providers,
-  adapter: MongoDBAdapter(clientPromise),
+  //adapter: MongoDBAdapter(clientPromise),
 };
 
 export default NextAuth(options);

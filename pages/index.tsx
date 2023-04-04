@@ -1,13 +1,20 @@
 import Head from 'next/head'
 import Image from 'next/image'
 import styles from '@/styles/Home.module.css'
+import { useState, useEffect } from 'react';
 import { useSession, signIn, signOut } from "next-auth/react";
+import { createTodo, getTodos, deleteTodo } from '@/apiCalls';
 
 export default function Home() {
 
+ const { data: session } = useSession();
 
+ const [postData, setPostData] = useState({
+   description: "",
+   username: "",
+ });
+ 
 function Component() {
-  const { data: session } = useSession();
   if (session) {
     return (
       <>
@@ -30,7 +37,21 @@ function Component() {
     </>
   );
 }
-  
+
+ const handleSubmit = async(e: React.ChangeEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    createTodo(postData)
+ }
+
+
+ useEffect(() => {
+    const username = session?.user?.name as string;
+    const newUsername = username?.replace(/\s+/g, "_");
+    setPostData({ ...postData, username: newUsername });
+   const hello =  getTodos(postData.username)
+   console.log(hello)
+   deleteTodo()
+ }, [postData.description])
 
   return (
     <>
@@ -61,7 +82,7 @@ function Component() {
                 placeholder="username"
                 className="drop-shadow-md pt-1 rounded-sm"
               ></input>
-              <p className='pt-6'>Set Password</p>
+              <p className="pt-6">Set Password</p>
               <input
                 placeholder="username"
                 className="drop-shadow-md pt-1 rounded-sm"
@@ -70,6 +91,18 @@ function Component() {
           </div>
           {Component()}
         </div>
+        <form className="bg-yellow-500" onSubmit={handleSubmit}>
+          <input
+            name="description"
+            className="bg-red-500"
+            value={postData.description}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setPostData({ ...postData, description: e.target.value })
+            }
+            type="text"
+          />
+          <button type='submit'>Submit</button>
+        </form>
       </main>
     </>
   );
