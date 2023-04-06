@@ -3,7 +3,7 @@ import Image from 'next/image'
 import styles from '@/styles/Home.module.css'
 import { useState, useEffect } from 'react';
 import { useSession, signIn, signOut } from "next-auth/react";
-import { createTodo, getTodos, deleteTodo } from '@/apiCalls';
+import { createTodo, getTodos, deleteTodo, updateTodo, updateCompletion } from '@/apiCalls';
 
 export default function Home() {
 
@@ -13,6 +13,8 @@ export default function Home() {
    description: "",
    username: "",
  });
+
+ const [todos, setTodos] = useState([])
  
 function Component() {
   if (session) {
@@ -43,16 +45,22 @@ function Component() {
     createTodo(postData)
  }
 
+ const getTodo = async() => {
+  try {
+    const allTodos = await getTodos(postData.username);
+    setTodos(allTodos.data.todos.todo);
+    console.log(todos)
+  } catch (error) {
+    console.log(error)
+  }
+ }
 
  useEffect(() => {
     const username = session?.user?.name as string;
     const newUsername = username?.replace(/\s+/g, "_");
     setPostData({ ...postData, username: newUsername });
-   const hello =  getTodos(postData.username)
-   console.log(hello)
-   deleteTodo()
+    getTodo()
  }, [postData.description])
-
   return (
     <>
       <Head>
@@ -91,6 +99,32 @@ function Component() {
           </div>
           {Component()}
         </div>
+        <div className="flex text-white font-bold text-2xl justify-center">
+          {todos?.map((todo) => {
+             return (
+               <div>
+                 <div className="text-black font-bold">{todo?.description}</div>
+                 <div className="text-black font-bold">
+                   {String(todo?.completed)}
+                 </div>
+                 <button
+                   className="text-black font-bold"
+                   onClick={() =>
+                     updateTodo(
+                       postData.username,
+                       todo?.description,
+                       "asfaf",
+                       todo.completed
+                     )
+                   }
+                 >
+                   UPDATE THIS NOW!!!!
+                 </button>
+               </div>
+             );
+          })}
+          {/* {Component()} */}
+        </div>
         <form className="bg-yellow-500" onSubmit={handleSubmit}>
           <input
             name="description"
@@ -101,7 +135,7 @@ function Component() {
             }
             type="text"
           />
-          <button type='submit'>Submit</button>
+          <button type="submit">Submit</button>
         </form>
       </main>
     </>

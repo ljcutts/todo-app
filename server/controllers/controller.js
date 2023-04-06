@@ -59,31 +59,43 @@ const createTodo = async (req, res) => {
 };
 
 const deleteTodo = async(req, res) => {
-  const { username, description, completion } = req.body;
+  const { username, description, completed } = req.body;
    await todoUser.updateOne(
      { username: username },
      {
        $pull: {
          "todo": {
            description: description,
-           completed: completion
+           completed: completed
          },
        },
      }
    );
 
-   res.status(200).json({username: username, description: description, completed: completion})
+   res.status(200).json({username: username, description: description, completed: completed})
 } 
 
 const updateTodo = async(req, res) => {
-  const {username, description, newDescription, completion} = req.body
+  const { _username, _description } = req.params;
+  const { newDescription, completed } = req.body
 
   await todoUser.updateOne(
-    { username: username, "todo.description": description },
+    { username: _username, "todo.description": _description },
     { $set: { "todo.$.description": newDescription } }
   );
 
-  res.status(200).json({username: username, description: newDescription, completed: completion});
+  res.status(200).json({username: _username, description: newDescription, completed: completed});
 }
 
-module.exports = {createTodo, getTodos, deleteTodo};
+const updateCompletion = async(req, res) => {
+    const { _username, _description, _completed } = req.params;
+     
+    await todoUser.updateOne(
+      { username: _username, "todo.description": _description },
+      { $set: { "todo.$.completed": !_completed } }
+    );
+
+    res.status(200).json({ username: _username, description: _description, completed: !completion});
+}
+
+module.exports = {createTodo, getTodos, deleteTodo, updateTodo, updateCompletion};
