@@ -14,35 +14,15 @@ export default function Home() {
    username: "",
  });
 
+ const [completed, setCompleted] = useState<boolean>(false)
+
  const [todos, setTodos] = useState([])
- 
-function Component() {
-  if (session) {
-    return (
-      <>
-        Signed in as <span className='text-black'>{session.user?.name}</span> <br />
-        <button className="w-40 h-40 bg-black" onClick={() => signOut()}>
-          Sign out
-        </button>
-      </>
-    );
-  }
-  return (
-    <>
-      Not signed in <br />
-      <button
-        className="w-40 h-40 bg-black"
-        onClick={() => signIn()}
-      >
-        Sign in
-      </button>
-    </>
-  );
-}
 
  const handleSubmit = async(e: React.ChangeEvent<HTMLFormElement>) => {
     e.preventDefault()
-    createTodo(postData)
+    createTodo({username: postData.username, description: postData.description, completed: completed})
+    setPostData({description: "", username: ""})
+    setCompleted(false)
  }
 
  const getTodo = async() => {
@@ -59,8 +39,9 @@ function Component() {
     const username = session?.user?.name as string;
     const newUsername = username?.replace(/\s+/g, "_");
     setPostData({ ...postData, username: newUsername });
-    getTodo()
+    //getTodo()
  }, [postData.description])
+
   return (
     <>
       <Head>
@@ -70,74 +51,123 @@ function Component() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <main className="w-screen bg-cover">
-        <div className="bg-mobile bg-no-repeat bg-cover bg-center h-60 w-full"></div>
-        <div className="flex justify-between px-8">
-          <h1 className="text-white text-2xl font-bold tracking-todo">TODO</h1>
-          <img
-            className="pr-5 pb-2 cursor-pointer"
-            src="/images/icon-moon.svg"
-            alt=""
-            width={50}
-            height={50}
-          />
-        </div>
-        <h1 className="text-center">REGISTER</h1>
-        <div className="flex text-white font-bold text-2xl justify-center">
-          <div className="w-80%">
-            <div className="drop-shadow-lg pl-5 pt-10 text-sm text-black rounded-md h-80">
-              <p>Set Username</p>
-              <input
-                placeholder="username"
-                className="drop-shadow-md pt-1 rounded-sm"
-              ></input>
-              <p className="pt-6">Set Password</p>
-              <input
-                placeholder="username"
-                className="drop-shadow-md pt-1 rounded-sm"
-              ></input>
-            </div>
+        <div className="bg-mobile bg-no-repeat bg-cover bg-center h-60 w-full">
+          <div className="flex pt-14 px-6 bg-transparent justify-between">
+            <h1 className="text-white w-0 text-3xl font-bold tracking-todo">
+              TODO
+            </h1>
+            <img
+              className="cursor-pointer pt-1 w-[7%] h-[7%] bg-transparent"
+              src="/images/icon-moon.svg"
+              alt=""
+            />
           </div>
-          {Component()}
         </div>
-        <div className="flex text-white font-bold text-2xl justify-center">
-          {todos?.map((todo) => {
-             return (
-               <div>
-                 <div className="text-black font-bold">{todo?.description}</div>
-                 <div className="text-black font-bold">
-                   {String(todo?.completed)}
-                 </div>
-                 <button
-                   className="text-black font-bold"
-                   onClick={() =>
-                     updateTodo(
-                       postData.username,
-                       todo?.description,
-                       "asfaf",
-                       todo.completed
-                     )
-                   }
-                 >
-                   UPDATE THIS NOW!!!!
-                 </button>
-               </div>
-             );
-          })}
-          {/* {Component()} */}
-        </div>
-        <form className="bg-yellow-500" onSubmit={handleSubmit}>
-          <input
-            name="description"
-            className="bg-red-500"
-            value={postData.description}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-              setPostData({ ...postData, description: e.target.value })
-            }
-            type="text"
-          />
-          <button type="submit">Submit</button>
-        </form>
+        {session ? (
+          <>
+            <div className="flex justify-center">
+              <form
+                className="flex w-[80%] h-12 rounded-md relative bottom-[7rem]"
+                onSubmit={handleSubmit}
+              >
+                <div
+                  onClick={() => setCompleted(!completed)}
+                  className="w-[20%] cursor-pointer flex justify-center items-center rounded-md h-12"
+                >
+                  <div
+                    className={
+                      completed === false
+                        ? styles.complete
+                        : "bg-check w-[20px] hover:opacity-50 h-[20px] flex justify-center items-center rounded-full"
+                    }
+                  >
+                    <img
+                      className="bg-transparent"
+                      src="/images/icon-check.svg"
+                      alt=""
+                    />
+                  </div>
+                </div>
+                <input
+                  value={postData.description}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                    setPostData({ ...postData, description: e.target.value })
+                  }
+                  placeholder="Create a todo..."
+                  className="w-[80%] outline-none rounded-md"
+                  type="text"
+                />
+              </form>
+            </div>               
+            <div
+              onClick={() => signOut()}
+              className="flex justify-center cursor-pointer"
+            >
+              Sign out
+            </div>
+            {/* Signed in as <span className='text-black'>{session.user?.name}</span> <br />
+        <button className="w-40 h-40 bg-black" onClick={() => signOut()}>
+          Sign out
+        </button> */}
+          </>
+        ) : (
+          <>
+            <h1 className="text-center">REGISTER</h1>
+            <div className="flex text-white font-bold text-2xl justify-center">
+              <div className="w-80%">
+                <div className="drop-shadow-lg pt-10 text-sm text-black rounded-md h-80">
+                  <div className="pl-5 pb-4">
+                    <p>Set Username</p>
+                    <input
+                      placeholder="username"
+                      className="drop-shadow-md rounded-sm w-[55%]"
+                    ></input>
+                    <p className="pt-6 ">Set Password</p>
+                    <input
+                      placeholder="username"
+                      className="drop-shadow-md rounded-sm w-[55%]"
+                    ></input>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <div className="bg-black opacity-50 h-[1px] w-[40%]"></div>
+                    <h1 className="text-black opacity-50">or</h1>
+                    <div className="bg-black h-[1px] opacity-50  w-[40%]"></div>
+                  </div>
+                  <div className="flex pt-8 justify-center  mx-auto w-[200px] items-center rounded-md shadow-md">
+                    <button onClick={() => signIn()}>Login As</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
       </main>
     </>
   );
 }
+
+
+
+
+//  {
+//    todos?.map((todo) => {
+//      return (
+//        <div>
+//          <div className="text-black font-bold">{todo?.description}</div>
+//          <div className="text-black font-bold">{String(todo?.completed)}</div>
+//          <button
+//            className="text-black font-bold"
+//            onClick={() =>
+//              updateCompletion(
+//                postData.username,
+//                todo.description,
+//                String(!todo.completed)
+//              )
+//            }
+//          >
+//            UPDATE THIS NOW!!!!
+//          </button>
+//        </div>
+//      );
+//    });
+//  }

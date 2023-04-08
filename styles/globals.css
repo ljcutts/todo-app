@@ -5,6 +5,10 @@
     background-color: hsl(0, 0%, 98%)
 }
 
+input, textarea {
+  caret-color:  hsl(192, 100%, 67%); 
+}
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

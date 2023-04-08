@@ -13,15 +13,17 @@ module.exports = {
       backgroundImage: {
         mobile: "url('/images/bg-mobile-light.jpg')",
         background: "hsl(0, 0%, 98%)",
+        check:
+          "linear-gradient(to bottom, hsl(192, 100%, 67%), hsl(280, 87%, 65%)); ",
       },
       backgroundSize: {
-        100: "768px",
+        "50%": "50%",
       },
       letterSpacing: {
         todo: "0.6rem",
       },
       width: {
-        "80%": "80%"
+        "80%": "80%",
       },
     },
   },

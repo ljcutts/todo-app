@@ -21,14 +21,14 @@ const getTodos = async(req, res) => {
 }
 
 const createTodo = async (req, res) => {
-  const { username, description } = req.body;
+  const { username, description, completed } = req.body;
 
   const newTodoUser = new todoUser({
     username: username,
     todo: [
       {
         description: description,
-        completed: false,
+        completed: completed
       },
     ],
   });
@@ -89,13 +89,14 @@ const updateTodo = async(req, res) => {
 
 const updateCompletion = async(req, res) => {
     const { _username, _description, _completed } = req.params;
-     
-    await todoUser.updateOne(
+
+    const changeCompletion = await todoUser.updateOne(
       { username: _username, "todo.description": _description },
-      { $set: { "todo.$.completed": !_completed } }
+      { $set: { "todo.$.completed": _completed } }
     );
 
-    res.status(200).json({ username: _username, description: _description, completed: !completion});
+    res.status(200).json({ username: _username, description: _description, completed: _completed});
 }
 
 module.exports = {createTodo, getTodos, deleteTodo, updateTodo, updateCompletion};
+  

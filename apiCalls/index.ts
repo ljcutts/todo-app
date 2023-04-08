@@ -3,6 +3,7 @@ import axios from "axios"
 interface OneToDo {
     username: string
     description: string
+    completed: boolean
 }
 
 export const createTodo = (newTodo: OneToDo) => axios.post("http://localhost:5000/api/todo", newTodo);
@@ -20,5 +21,5 @@ export const updateTodo = (
   export const updateCompletion = (
     username: string,
     description: string,
-    completed: boolean
+    completed: string
   ) => axios.patch(`http://localhost:5000/api/todo/${username}/${description}/${completed}`);
