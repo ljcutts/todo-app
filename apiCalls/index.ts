@@ -1,6 +1,6 @@
 import axios from "axios"
 
-interface OneToDo {
+export interface OneToDo {
     username: string
     description: string
     completed: boolean
@@ -8,7 +8,14 @@ interface OneToDo {
 
 export const createTodo = (newTodo: OneToDo) => axios.post("http://localhost:5000/api/todo", newTodo);
 export const getTodos = (username: string) => axios.get(`http://localhost:5000/api/users/${username}`);
-export const deleteTodo = () => axios.delete("http://localhost:5000/api/");
+export const deleteTodo = (username: string, description: string, completed: string) =>
+  axios.delete("http://localhost:5000/api/", {
+    data: {
+      username: username,
+      description: description,
+      completed: completed
+    },
+  });
 export const updateTodo = (
   username: string,
   description: string,

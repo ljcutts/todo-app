@@ -3,7 +3,7 @@ import Image from 'next/image'
 import styles from '@/styles/Home.module.css'
 import { useState, useEffect } from 'react';
 import { useSession, signIn, signOut } from "next-auth/react";
-import { createTodo, getTodos, deleteTodo, updateTodo, updateCompletion } from '@/apiCalls';
+import { createTodo, getTodos, deleteTodo, updateTodo, updateCompletion, OneToDo } from '@/apiCalls';
 
 export default function Home() {
 
@@ -17,30 +17,72 @@ export default function Home() {
  const [completed, setCompleted] = useState<boolean>(false)
 
  const [todos, setTodos] = useState([])
-
- const handleSubmit = async(e: React.ChangeEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    createTodo({username: postData.username, description: postData.description, completed: completed})
-    setPostData({description: "", username: ""})
-    setCompleted(false)
- }
+ const [lastIndex, setLastIndex] = useState<number>(0)
+ const [needCompleted, setNeedCompleted] = useState<number>(0)
 
  const getTodo = async() => {
   try {
+    let counter = 0
     const allTodos = await getTodos(postData.username);
     setTodos(allTodos.data.todos.todo);
-    console.log(todos)
+    setLastIndex(todos.length - 1);
+    todos.forEach((todo: OneToDo) => {
+      if(todo.completed === false) {
+        counter++;
+      }
+    })
+   setNeedCompleted(counter)
   } catch (error) {
     console.log(error)
   }
  }
 
+ const handleSubmit = async (e: React.ChangeEvent<HTMLFormElement>) => {
+   e.preventDefault();
+   await createTodo({
+     username: postData.username,
+     description: postData.description,
+     completed: completed,
+   });
+   setPostData({ description: "", username: "" });
+   setCompleted(false);
+   await getTodo();
+ };
+
+ const updateTodoCompletion = async(todo:OneToDo) => {
+   await updateCompletion(
+      postData.username,
+      todo.description,
+      String(!todo.completed)
+    );
+    await getTodo()
+ }
+
+ const deleteTheTodo = async (
+   username: string,
+   description: string,
+   completed: string
+ ) => {
+   await deleteTodo(username, description, completed);
+   await getTodo();
+ };
+
+//  const clearCompletion = async() => {
+//    await getTodo()
+//    todos.forEach(async(todo:OneToDo) => {
+//     if(String(todo.completed) === String(true)) {
+//        await deleteTodo(todo.username, todo.description, String(todo.completed));
+//     }
+//    })
+//     await getTodo();
+//  }
+
  useEffect(() => {
     const username = session?.user?.name as string;
     const newUsername = username?.replace(/\s+/g, "_");
     setPostData({ ...postData, username: newUsername });
-    //getTodo()
- }, [postData.description])
+    getTodo()
+ }, [postData.description, completed])
 
   return (
     <>
@@ -65,40 +107,101 @@ export default function Home() {
         </div>
         {session ? (
           <>
-            <div className="flex justify-center">
-              <form
-                className="flex w-[80%] h-12 rounded-md relative bottom-[7rem]"
-                onSubmit={handleSubmit}
+            <form
+              className="flex mx-auto w-[80%] h-12 rounded-md relative bottom-[7rem]"
+              onSubmit={handleSubmit}
+            >
+              <div
+                onClick={() => setCompleted(!completed)}
+                className="w-[20%] cursor-pointer flex justify-center items-center rounded-md h-12"
               >
                 <div
-                  onClick={() => setCompleted(!completed)}
-                  className="w-[20%] cursor-pointer flex justify-center items-center rounded-md h-12"
+                  className={
+                    completed === false
+                      ? styles.complete
+                      : "bg-check w-[20px] hover:opacity-50 h-[20px] flex justify-center items-center rounded-full"
+                  }
                 >
+                  <img
+                    className="bg-transparent"
+                    src="/images/icon-check.svg"
+                    alt=""
+                  />
+                </div>
+              </div>
+              <input
+                value={postData.description}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setPostData({ ...postData, description: e.target.value })
+                }
+                placeholder="Create a todo..."
+                className="w-[80%] outline-none rounded-md"
+                type="text"
+              />
+            </form>
+            {todos.map((todo:OneToDo, index) => {
+              return (
+                <>
                   <div
+                    key={index}
                     className={
-                      completed === false
-                        ? styles.complete
-                        : "bg-check w-[20px] hover:opacity-50 h-[20px] flex justify-center items-center rounded-full"
+                      index > 0
+                        ? "flex mx-auto w-[80%] text-gray-500 h-12 border-b-[1px] border-gray-300 relative bottom-[4.5rem]"
+                        : "flex mx-auto w-[80%] h-12 rounded-t-md border-b-[1px] border-gray-300 relative bottom-[4.5rem]"
                     }
                   >
-                    <img
-                      className="bg-transparent"
-                      src="/images/icon-check.svg"
-                      alt=""
+                    <div
+                      onClick={() => updateTodoCompletion(todo)}
+                      className="w-[20%] cursor-pointer flex justify-center items-center border-b-[1px] border-gray-300 rounded-t-md  h-12"
+                    >
+                      <div
+                        className={
+                          todo.completed === false
+                            ? styles.complete
+                            : "bg-check w-[20px] hover:opacity-50 h-[20px] flex justify-center items-center rounded-full"
+                        }
+                      >
+                        <img
+                          className="bg-transparent"
+                          src="/images/icon-check.svg"
+                          alt=""
+                        />
+                      </div>
+                    </div>
+                    <input
+                      value={todo.description}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setPostData({
+                          ...postData,
+                          description: e.target.value,
+                        })
+                      }
+                      placeholder="Create a todo..."
+                      className={
+                        todo.completed
+                          ? "w-[60%] line-through text-gray-400 outline-none"
+                          : "w-[60%] text-gray-400 outline-none"
+                      }
+                      type="text"
+                      readOnly={true}
                     />
+                    <div onClick={() => deleteTheTodo(postData.username, todo.description, String(todo.completed))} className="w-[20%] rounded-t-md flex justify-center items-center">
+                      <img
+                        className="w-[25%] cursor-pointer hover:opacity-50"
+                        src="/images/icon-cross.svg"
+                        alt=""
+                      />
+                    </div>
                   </div>
-                </div>
-                <input
-                  value={postData.description}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setPostData({ ...postData, description: e.target.value })
-                  }
-                  placeholder="Create a todo..."
-                  className="w-[80%] outline-none rounded-md"
-                  type="text"
-                />
-              </form>
-            </div>               
+                  {index === lastIndex && (
+                    <div className="flex justify-between shadow-sm text-gray-400 text-sm px-4 items-center w-[80%] relative bottom-[4.5rem] h-12 mx-auto rounded-b-md">
+                      <p>{needCompleted} items left</p>
+                      <p  className='cursor-pointer hover:opacity-50'>Clear Completed</p>
+                    </div>
+                  )}
+                </>
+              );
+            })}
             <div
               onClick={() => signOut()}
               className="flex justify-center cursor-pointer"
