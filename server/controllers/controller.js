@@ -1,4 +1,3 @@
-//update(edit todo and mark complete/not completed)
 const mongoose = require("mongoose");
 
 let userTodoSchema = new mongoose.Schema({
@@ -45,7 +44,7 @@ const createTodo = async (req, res) => {
          $push: {
            "todo": {
              description: description,
-             completed: false
+             completed: completed
            },
          },
        },
@@ -75,13 +74,28 @@ const deleteTodo = async(req, res) => {
    res.status(200).json({username: username, description: description, completed: completed})
 } 
 
+const deleteCompleted = async(req,res) => {
+ const { username } = req.body;
+ const deletedTodos = await todoUser.updateMany(
+   { username: username },
+   {
+     $pull: {
+       todo: {
+         completed: "true"
+       },
+     },
+   }
+ );
+   res.status(200).json({deletedTodos});
+}
+
 const updateTodo = async(req, res) => {
   const { _username, _description } = req.params;
   const { newDescription, completed } = req.body
 
   await todoUser.updateOne(
     { username: _username, "todo.description": _description },
-    { $set: { "todo.$.description": newDescription } }
+    { $set: { "todo.$.description": newDescription } } 
   );
 
   res.status(200).json({username: _username, description: newDescription, completed: completed});
@@ -90,7 +104,7 @@ const updateTodo = async(req, res) => {
 const updateCompletion = async(req, res) => {
     const { _username, _description, _completed } = req.params;
 
-    const changeCompletion = await todoUser.updateOne(
+    await todoUser.updateOne(
       { username: _username, "todo.description": _description },
       { $set: { "todo.$.completed": _completed } }
     );
@@ -98,5 +112,5 @@ const updateCompletion = async(req, res) => {
     res.status(200).json({ username: _username, description: _description, completed: _completed});
 }
 
-module.exports = {createTodo, getTodos, deleteTodo, updateTodo, updateCompletion};
+module.exports = {createTodo, getTodos, deleteTodo, updateTodo, updateCompletion, deleteCompleted};
   

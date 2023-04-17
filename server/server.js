@@ -7,6 +7,7 @@ const {
   deleteTodo,
   updateTodo,
   updateCompletion,
+  deleteCompleted
 } = require("../server/controllers/controller");
 const cors = require("cors");
 const bodyParser = require("body-parser");
@@ -16,7 +17,7 @@ app.use(cors());
 app.use(express.json());
 
 mongoose.connect(
-  ``,
+  "",
   {
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -32,6 +33,8 @@ app.patch("/api/todo/:_username/:_description", updateTodo);
 app.patch("/api/todo/:_username/:_description/:_completed", updateCompletion);
 
 app.delete("/api", deleteTodo);
+
+app.delete("/api/completed", deleteCompleted);
 
 app.listen(5000, () =>
   console.log(`Server Running on Port: http://localhost:5000`)

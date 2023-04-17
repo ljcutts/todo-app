@@ -1,17 +1,22 @@
+//Define Types
+//Enable Editing
+//Enable Drag And Drop
+//Toggle Light and Dark
+//Enable Regular Username/Password Authentication
+
 import Head from 'next/head'
-import Image from 'next/image'
 import styles from '@/styles/Home.module.css'
 import { useState, useEffect } from 'react';
-import { useSession, signIn, signOut } from "next-auth/react";
-import { createTodo, getTodos, deleteTodo, updateTodo, updateCompletion, OneToDo } from '@/apiCalls';
+import { getSession, useSession, signIn, signOut } from "next-auth/react";
+import { createTodo, getTodos, deleteTodo, updateTodo, updateCompletion, OneToDo, deleteCompleted } from '@/apiCalls';
 
-export default function Home() {
+export default function Home({name}:any) {
 
  const { data: session } = useSession();
 
  const [postData, setPostData] = useState({
    description: "",
-   username: "",
+   username: name,
  });
 
  const [completed, setCompleted] = useState<boolean>(false)
@@ -19,11 +24,12 @@ export default function Home() {
  const [todos, setTodos] = useState([])
  const [lastIndex, setLastIndex] = useState<number>(0)
  const [needCompleted, setNeedCompleted] = useState<number>(0)
+ const [selection, setSelection] = useState<string>("")
 
  const getTodo = async() => {
   try {
     let counter = 0
-    const allTodos = await getTodos(postData.username);
+    const allTodos = await getTodos(name);
     setTodos(allTodos.data.todos.todo);
     setLastIndex(todos.length - 1);
     todos.forEach((todo: OneToDo) => {
@@ -31,7 +37,7 @@ export default function Home() {
         counter++;
       }
     })
-   setNeedCompleted(counter)
+  setNeedCompleted(counter)
   } catch (error) {
     console.log(error)
   }
@@ -40,49 +46,18 @@ export default function Home() {
  const handleSubmit = async (e: React.ChangeEvent<HTMLFormElement>) => {
    e.preventDefault();
    await createTodo({
-     username: postData.username,
+     username: name,
      description: postData.description,
      completed: completed,
    });
    setPostData({ description: "", username: "" });
    setCompleted(false);
-   await getTodo();
  };
 
- const updateTodoCompletion = async(todo:OneToDo) => {
-   await updateCompletion(
-      postData.username,
-      todo.description,
-      String(!todo.completed)
-    );
-    await getTodo()
- }
-
- const deleteTheTodo = async (
-   username: string,
-   description: string,
-   completed: string
- ) => {
-   await deleteTodo(username, description, completed);
-   await getTodo();
- };
-
-//  const clearCompletion = async() => {
-//    await getTodo()
-//    todos.forEach(async(todo:OneToDo) => {
-//     if(String(todo.completed) === String(true)) {
-//        await deleteTodo(todo.username, todo.description, String(todo.completed));
-//     }
-//    })
-//     await getTodo();
-//  }
 
  useEffect(() => {
-    const username = session?.user?.name as string;
-    const newUsername = username?.replace(/\s+/g, "_");
-    setPostData({ ...postData, username: newUsername });
-    getTodo()
- }, [postData.description, completed])
+     getTodo();
+ })
 
   return (
     <>
@@ -99,7 +74,7 @@ export default function Home() {
               TODO
             </h1>
             <img
-              className="cursor-pointer pt-1 w-[7%] h-[7%] bg-transparent"
+              className="cursor-pointer pt-1 w-[7%] h-[7%] bg-transparent hover:opacity-50"
               src="/images/icon-moon.svg"
               alt=""
             />
@@ -139,79 +114,307 @@ export default function Home() {
                 type="text"
               />
             </form>
-            {todos.map((todo:OneToDo, index) => {
-              return (
-                <>
-                  <div
-                    key={index}
-                    className={
-                      index > 0
-                        ? "flex mx-auto w-[80%] text-gray-500 h-12 border-b-[1px] border-gray-300 relative bottom-[4.5rem]"
-                        : "flex mx-auto w-[80%] h-12 rounded-t-md border-b-[1px] border-gray-300 relative bottom-[4.5rem]"
-                    }
-                  >
+            {todos.length > 0 &&
+              (selection === "" || selection === "All") &&
+              todos.map((todo: OneToDo, index: number) => {
+                return (
+                  <div key={index}>
                     <div
-                      onClick={() => updateTodoCompletion(todo)}
-                      className="w-[20%] cursor-pointer flex justify-center items-center border-b-[1px] border-gray-300 rounded-t-md  h-12"
+                      className={
+                        index > 0
+                          ? "flex mx-auto w-[80%] text-gray-500 h-12 border-b-[1px] border-gray-300 relative bottom-[4.5rem]"
+                          : "flex mx-auto w-[80%] h-12 rounded-t-md border-b-[1px] border-gray-300 relative bottom-[4.5rem]"
+                      }
                     >
                       <div
-                        className={
-                          todo.completed === false
-                            ? styles.complete
-                            : "bg-check w-[20px] hover:opacity-50 h-[20px] flex justify-center items-center rounded-full"
+                        onClick={() =>
+                          updateCompletion(
+                            name,
+                            todo.description,
+                            String(!todo.completed)
+                          )
                         }
+                        className="w-[20%] cursor-pointer flex justify-center items-center border-b-[1px] border-gray-300 rounded-t-md  h-12"
+                      >
+                        <div
+                          className={
+                            todo.completed === false
+                              ? styles.complete
+                              : "bg-check w-[20px] hover:opacity-50 h-[20px] flex justify-center items-center rounded-full"
+                          }
+                        >
+                          <img
+                            className="bg-transparent"
+                            src="/images/icon-check.svg"
+                            alt=""
+                          />
+                        </div>
+                      </div>
+                      <input
+                        value={todo.description}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                          setPostData({
+                            ...postData,
+                            description: e.target.value,
+                          })
+                        }
+                        placeholder="Create a todo..."
+                        className={
+                          todo.completed
+                            ? "w-[60%] line-through text-gray-400 outline-none"
+                            : "w-[60%] outline-none"
+                        }
+                        type="text"
+                        readOnly={true}
+                      />
+                      <div
+                        onClick={() =>
+                          deleteTodo(
+                            name,
+                            todo.description,
+                            String(todo.completed)
+                          )
+                        }
+                        className="w-[20%] rounded-t-md flex justify-center items-center"
                       >
                         <img
-                          className="bg-transparent"
-                          src="/images/icon-check.svg"
+                          className="w-[25%] cursor-pointer hover:opacity-50"
+                          src="/images/icon-cross.svg"
                           alt=""
                         />
                       </div>
                     </div>
-                    <input
-                      value={todo.description}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        setPostData({
-                          ...postData,
-                          description: e.target.value,
-                        })
-                      }
-                      placeholder="Create a todo..."
-                      className={
-                        todo.completed
-                          ? "w-[60%] line-through text-gray-400 outline-none"
-                          : "w-[60%] text-gray-400 outline-none"
-                      }
-                      type="text"
-                      readOnly={true}
-                    />
-                    <div onClick={() => deleteTheTodo(postData.username, todo.description, String(todo.completed))} className="w-[20%] rounded-t-md flex justify-center items-center">
-                      <img
-                        className="w-[25%] cursor-pointer hover:opacity-50"
-                        src="/images/icon-cross.svg"
-                        alt=""
-                      />
-                    </div>
+                    {index === lastIndex && (
+                      <div
+                        onClick={() => deleteCompleted(name)}
+                        className="flex justify-between shadow-sm text-gray-400 text-sm px-4 items-center w-[80%] relative bottom-[4.5rem] h-12 mx-auto rounded-b-md"
+                      >
+                        <p>{needCompleted} items left</p>
+                        <p className="cursor-pointer hover:opacity-50">
+                          Clear Completed
+                        </p>
+                      </div>
+                    )}
                   </div>
-                  {index === lastIndex && (
-                    <div className="flex justify-between shadow-sm text-gray-400 text-sm px-4 items-center w-[80%] relative bottom-[4.5rem] h-12 mx-auto rounded-b-md">
-                      <p>{needCompleted} items left</p>
-                      <p  className='cursor-pointer hover:opacity-50'>Clear Completed</p>
+                );
+              })}
+            {todos.length > 0 &&
+              selection === "Active" &&
+              todos
+                .filter((todo: OneToDo) => !todo.completed)
+                .map((todo: OneToDo, index: number) => {
+                  return (
+                    <div key={index}>
+                      <div
+                        className={
+                          index > 0
+                            ? "flex mx-auto w-[80%] text-gray-500 h-12 border-b-[1px] border-gray-300 relative bottom-[4.5rem]"
+                            : "flex mx-auto w-[80%] h-12 rounded-t-md border-b-[1px] border-gray-300 relative bottom-[4.5rem]"
+                        }
+                      >
+                        <div
+                          onClick={() =>
+                            updateCompletion(
+                              name,
+                              todo.description,
+                              String(!todo.completed)
+                            )
+                          }
+                          className="w-[20%] cursor-pointer flex justify-center items-center border-b-[1px] border-gray-300 rounded-t-md  h-12"
+                        >
+                          <div
+                            className={
+                              todo.completed === false
+                                ? styles.complete
+                                : "bg-check w-[20px] hover:opacity-50 h-[20px] flex justify-center items-center rounded-full"
+                            }
+                          >
+                            <img
+                              className="bg-transparent"
+                              src="/images/icon-check.svg"
+                              alt=""
+                            />
+                          </div>
+                        </div>
+                        <input
+                          value={todo.description}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            setPostData({
+                              ...postData,
+                              description: e.target.value,
+                            })
+                          }
+                          className={
+                            todo.completed
+                              ? "w-[60%] line-through text-gray-400 outline-none"
+                              : "w-[60%] outline-none"
+                          }
+                          type="text"
+                          readOnly={true}
+                        />
+                        <div
+                          onClick={() =>
+                            deleteTodo(
+                              name,
+                              todo.description,
+                              String(todo.completed)
+                            )
+                          }
+                          className="w-[20%] rounded-t-md flex justify-center items-center"
+                        >
+                          <img
+                            className="w-[25%] cursor-pointer hover:opacity-50"
+                            src="/images/icon-cross.svg"
+                            alt=""
+                          />
+                        </div>
+                      </div>
+                      {index === lastIndex && (
+                        <div
+                          onClick={() => deleteCompleted(name)}
+                          className="flex justify-between shadow-sm text-gray-400 text-sm px-4 items-center w-[80%] relative bottom-[4.5rem] h-12 mx-auto rounded-b-md"
+                        >
+                          <p>{needCompleted} items left</p>
+                          <p className="cursor-pointer hover:opacity-50">
+                            Clear Completed
+                          </p>
+                        </div>
+                      )}
                     </div>
-                  )}
-                </>
-              );
-            })}
-            <div
-              onClick={() => signOut()}
-              className="flex justify-center cursor-pointer"
-            >
-              Sign out
-            </div>
-            {/* Signed in as <span className='text-black'>{session.user?.name}</span> <br />
-        <button className="w-40 h-40 bg-black" onClick={() => signOut()}>
-          Sign out
-        </button> */}
+                  );
+                })}
+            {todos.length > 0 &&
+              selection === "Completed" &&
+              todos
+                .filter((todo: OneToDo) => todo.completed)
+                .map((todo: OneToDo, index: number) => {
+                  return (
+                    <div key={index}>
+                      <div
+                        className={
+                          index > 0
+                            ? "flex mx-auto w-[80%] text-gray-500 h-12 border-b-[1px] border-gray-300 relative bottom-[4.5rem]"
+                            : "flex mx-auto w-[80%] h-12 rounded-t-md border-b-[1px] border-gray-300 relative bottom-[4.5rem]"
+                        }
+                      >
+                        <div
+                          onClick={() =>
+                            updateCompletion(
+                              name,
+                              todo.description,
+                              String(!todo.completed)
+                            )
+                          }
+                          className="w-[20%] cursor-pointer flex justify-center items-center border-b-[1px] border-gray-300 rounded-t-md  h-12"
+                        >
+                          <div
+                            className={
+                              todo.completed === false
+                                ? styles.complete
+                                : "bg-check w-[20px] hover:opacity-50 h-[20px] flex justify-center items-center rounded-full"
+                            }
+                          >
+                            <img
+                              className="bg-transparent"
+                              src="/images/icon-check.svg"
+                              alt=""
+                            />
+                          </div>
+                        </div>
+                        <input
+                          value={todo.description}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            setPostData({
+                              ...postData,
+                              description: e.target.value,
+                            })
+                          }
+                          className={
+                            todo.completed
+                              ? "w-[60%] line-through text-gray-400 outline-none"
+                              : "w-[60%] outline-none"
+                          }
+                          type="text"
+                          readOnly={true}
+                        />
+                        <div
+                          onClick={() =>
+                            deleteTodo(
+                              name,
+                              todo.description,
+                              String(todo.completed)
+                            )
+                          }
+                          className="w-[20%] rounded-t-md flex justify-center items-center"
+                        >
+                          <img
+                            className="w-[25%] cursor-pointer hover:opacity-50"
+                            src="/images/icon-cross.svg"
+                            alt=""
+                          />
+                        </div>
+                      </div>
+                      {index === lastIndex && (
+                        <div
+                          onClick={() => deleteCompleted(name)}
+                          className="flex justify-between shadow-sm text-gray-400 text-sm px-4 items-center w-[80%] relative bottom-[4.5rem] h-12 mx-auto rounded-b-md"
+                        >
+                          <p>{needCompleted} items left</p>
+                          <p className="cursor-pointer hover:opacity-50">
+                            Clear Completed
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+            {todos.length > 0 && (
+              <>
+                <div className="mx-auto shadow-md flex items-center px-12 font-bold text-gray-400 justify-between rounded-md relative bottom-[3rem] h-12 w-[80%]">
+                  <h1
+                    onClick={() => setSelection("All")}
+                    className={
+                      selection === "" || selection === "All"
+                        ? "text-brightBlue"
+                        : "cursor-pointer hover:text-black"
+                    }
+                  >
+                    All
+                  </h1>
+                  <h1
+                    onClick={() => setSelection("Active")}
+                    className={
+                      selection === "Active"
+                        ? "text-brightBlue"
+                        : "cursor-pointer hover:text-black"
+                    }
+                  >
+                    Active
+                  </h1>
+                  <h1
+                    onClick={() => setSelection("Completed")}
+                    className={
+                      selection === "Completed"
+                        ? "text-brightBlue"
+                        : "cursor-pointer hover:text-black"
+                    }
+                  >
+                    Completed
+                  </h1>
+                </div>
+                <div
+                  className="flex justify-center text-gray-400 pb-4"
+                >
+                  Drag and drop to reorder list
+                </div>
+                <div
+                  onClick={() => signOut()}
+                  className="flex justify-center cursor-pointer"
+                >
+                  Sign out
+                </div>
+              </>
+            )}
           </>
         ) : (
           <>
@@ -249,28 +452,14 @@ export default function Home() {
   );
 }
 
+ export async function getServerSideProps(context) {
+   const session = await getSession(context);
+   const username = session?.user?.name as string;
+   const newUsername = username?.replace(/\s+/g, "_");
 
-
-
-//  {
-//    todos?.map((todo) => {
-//      return (
-//        <div>
-//          <div className="text-black font-bold">{todo?.description}</div>
-//          <div className="text-black font-bold">{String(todo?.completed)}</div>
-//          <button
-//            className="text-black font-bold"
-//            onClick={() =>
-//              updateCompletion(
-//                postData.username,
-//                todo.description,
-//                String(!todo.completed)
-//              )
-//            }
-//          >
-//            UPDATE THIS NOW!!!!
-//          </button>
-//        </div>
-//      );
-//    });
-//  }
+   return {
+     props: {
+       name: newUsername ?? ""
+     },
+   };
+ }

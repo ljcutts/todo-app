@@ -25,6 +25,9 @@ module.exports = {
       width: {
         "80%": "80%",
       },
+      colors: {
+        brightBlue: "hsl(220, 98%, 61%)",
+      },
     },
   },
   plugins: [],

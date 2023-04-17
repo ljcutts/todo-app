@@ -30,3 +30,10 @@ export const updateTodo = (
     description: string,
     completed: string
   ) => axios.patch(`http://localhost:5000/api/todo/${username}/${description}/${completed}`);
+
+  export const deleteCompleted = (username: string) =>
+    axios.delete("http://localhost:5000/api/completed", {
+      data: {
+        username: username
+      },
+    });
