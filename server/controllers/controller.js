@@ -93,12 +93,17 @@ const updateTodo = async(req, res) => {
   const { _username, _description } = req.params;
   const { newDescription, completed } = req.body
 
-  await todoUser.updateOne(
+  const hello = await todoUser.updateOne(
     { username: _username, "todo.description": _description },
-    { $set: { "todo.$.description": newDescription } } 
+    {
+      $set: {
+        "todo.$.description": newDescription,
+        "todo.$.completed": completed
+      },
+    }
   );
-
-  res.status(200).json({username: _username, description: newDescription, completed: completed});
+  console.log(hello)
+  res.status(200).json({username: _username, description: newDescription});
 }
 
 const updateCompletion = async(req, res) => {

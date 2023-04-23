@@ -1,14 +1,13 @@
 .complete {
-  border: solid;
-  border-color: rgb(156 163 175);
-  border-width: 1px;
-  width: 18px;
+  position: absolute;
+  align-items: center;
+ width: 18px;
   height: 18px;
+  background: white;
   border-radius: 9999px;
-  transition: border-image 3s;
 }
 
-.complete:hover{
+/* .complete:hover{
    border: solid;
   border-width: 1px;
   width: 18px;
@@ -17,4 +16,28 @@
   border-image-slice: 1;
    border-radius: 9999px;
    padding: 10px;
+} */
+
+.circleOuter {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+   width: 18px;
+  height: 18px;
+  border: 2px solid hsl(236, 9%, 61%);
+  border-radius: 9999px;
+  cursor: pointer;
+}
+
+.circleOuter:hover {
+  border: unset;
+  padding: 2px;
+  background: linear-gradient(to bottom, hsl(192, 100%, 67%), hsl(280, 87%, 65%)); 
+}
+
+.circleInner {
+  width: 14px;
+  height: 14px;
+  background: white;
+  border-radius: 9999px;
 }

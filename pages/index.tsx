@@ -1,5 +1,4 @@
 //Define Types
-//Enable Editing
 //Enable Drag And Drop
 //Toggle Light and Dark
 //Enable Regular Username/Password Authentication
@@ -25,6 +24,27 @@ export default function Home({name}:any) {
  const [lastIndex, setLastIndex] = useState<number>(0)
  const [needCompleted, setNeedCompleted] = useState<number>(0)
  const [selection, setSelection] = useState<string>("")
+ const [editedText, setEditedText] = useState<string>("")
+ const [editCompleted, setEditCompleted] = useState<boolean>(false)
+ const [canEdit, setCanEdit] = useState<boolean>(false)
+ const [editIndex, setEditIndex] = useState<number>(0)
+
+ const enableEdit = (description:string, index:number) => {
+   setEditedText(description)
+   setCanEdit(true)
+   setEditIndex(index)
+ }
+
+ const updateDescription = async(
+   description: string,
+   newDescription: string
+ ) => {
+   await updateTodo(name, description, newDescription, editCompleted)
+   setCanEdit(false)
+   setEditCompleted(false)
+   setEditedText("")
+   setEditIndex(0)
+ };
 
  const getTodo = async() => {
   try {
@@ -86,22 +106,24 @@ export default function Home({name}:any) {
               className="flex mx-auto w-[80%] h-12 rounded-md relative bottom-[7rem]"
               onSubmit={handleSubmit}
             >
-              <div
-                onClick={() => setCompleted(!completed)}
-                className="w-[20%] cursor-pointer flex justify-center items-center rounded-md h-12"
-              >
+              <div className="flex justify-center rounded-l-md items-center w-[20%]">
                 <div
-                  className={
-                    completed === false
-                      ? styles.complete
-                      : "bg-check w-[20px] hover:opacity-50 h-[20px] flex justify-center items-center rounded-full"
-                  }
+                  onClick={() => setCompleted(!completed)}
+                  className={styles.circleOuter}
                 >
-                  <img
-                    className="bg-transparent"
-                    src="/images/icon-check.svg"
-                    alt=""
-                  />
+                  <div
+                    className={
+                      completed === false
+                        ? styles.circleInner
+                        : "bg-check w-[18px] hover:opacity-50 h-[18px] flex justify-center items-center rounded-full"
+                    }
+                  >
+                    <img
+                      className="bg-transparent"
+                      src="/images/icon-check.svg"
+                      alt=""
+                    />
+                  </div>
                 </div>
               </div>
               <input
@@ -126,47 +148,107 @@ export default function Home({name}:any) {
                           : "flex mx-auto w-[80%] h-12 rounded-t-md border-b-[1px] border-gray-300 relative bottom-[4.5rem]"
                       }
                     >
-                      <div
-                        onClick={() =>
-                          updateCompletion(
-                            name,
-                            todo.description,
-                            String(!todo.completed)
-                          )
-                        }
-                        className="w-[20%] cursor-pointer flex justify-center items-center border-b-[1px] border-gray-300 rounded-t-md  h-12"
-                      >
-                        <div
-                          className={
-                            todo.completed === false
-                              ? styles.complete
-                              : "bg-check w-[20px] hover:opacity-50 h-[20px] flex justify-center items-center rounded-full"
-                          }
-                        >
-                          <img
-                            className="bg-transparent"
-                            src="/images/icon-check.svg"
-                            alt=""
-                          />
+                      {canEdit && index === editIndex ? (
+                        <div className="flex justify-center rounded-l-md items-center w-[20%]">
+                          <div
+                            onClick={() => setEditCompleted(!editCompleted)}
+                            className={styles.circleOuter}
+                          >
+                            <div
+                              className={
+                                editCompleted === false
+                                  ? styles.circleInner
+                                  : "bg-check w-[18px] hover:opacity-50 h-[18px] flex justify-center items-center rounded-full"
+                              }
+                            >
+                              <img
+                                className="bg-transparent"
+                                src="/images/icon-check.svg"
+                                alt=""
+                              />
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                      <input
-                        value={todo.description}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                          setPostData({
-                            ...postData,
-                            description: e.target.value,
-                          })
-                        }
-                        placeholder="Create a todo..."
-                        className={
-                          todo.completed
-                            ? "w-[60%] line-through text-gray-400 outline-none"
-                            : "w-[60%] outline-none"
-                        }
-                        type="text"
-                        readOnly={true}
-                      />
+                      ) : (
+                        <div className="flex justify-center rounded-l-md items-center w-[20%]">
+                          <div
+                            onClick={() =>
+                              updateCompletion(
+                                name,
+                                todo.description,
+                                String(!todo.completed)
+                              )
+                            }
+                            className={styles.circleOuter}
+                          >
+                            <div
+                              className={
+                                todo.completed === false
+                                  ? styles.circleInner
+                                  : "bg-check w-[18px] hover:opacity-50 h-[18px] flex justify-center items-center rounded-full"
+                              }
+                            >
+                              <img
+                                className="bg-transparent"
+                                src="/images/icon-check.svg"
+                                alt=""
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+
+                      {canEdit && index === editIndex ? (
+                        <input
+                          value={editedText}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            setEditedText(e.target.value)
+                          }
+                          placeholder="Create a todo..."
+                          className="w-[60%] text-black outline-none"
+                          type="text"
+                        />
+                      ) : (
+                        <input
+                          value={todo.description}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            setPostData({
+                              ...postData,
+                              description: e.target.value,
+                            })
+                          }
+                          placeholder="Create a todo..."
+                          className={
+                            todo.completed
+                              ? "w-[60%] line-through text-gray-400 outline-none"
+                              : "w-[60%] text-black outline-none"
+                          }
+                          type="text"
+                          readOnly={true}
+                        />
+                      )}
+                      {canEdit && index === editIndex ? (
+                        <div className="flex justify-center items-center">
+                          <button
+                            onClick={() =>
+                              updateDescription(todo.description, editedText)
+                            }
+                            className="flex justify-center items-center p-1 text-sm text-black bg-check rounded-md hover:opacity-50"
+                          >
+                            Update
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="flex justify-center items-center">
+                          <button
+                            onClick={() => enableEdit(todo.description, index)}
+                            className="flex justify-center items-center p-1 text-sm text-black bg-check rounded-md hover:opacity-50"
+                          >
+                            Edit
+                          </button>
+                        </div>
+                      )}
+
                       <div
                         onClick={() =>
                           deleteTodo(
@@ -175,7 +257,17 @@ export default function Home({name}:any) {
                             String(todo.completed)
                           )
                         }
-                        className="w-[20%] rounded-t-md flex justify-center items-center"
+                        className="w-[5%] rounded-t-md flex items-center"
+                      ></div>
+                      <div
+                        onClick={() =>
+                          deleteTodo(
+                            name,
+                            todo.description,
+                            String(todo.completed)
+                          )
+                        }
+                        className="w-[15%] rounded-t-md flex justify-center items-center"
                       >
                         <img
                           className="w-[25%] cursor-pointer hover:opacity-50"
@@ -212,46 +304,109 @@ export default function Home({name}:any) {
                             : "flex mx-auto w-[80%] h-12 rounded-t-md border-b-[1px] border-gray-300 relative bottom-[4.5rem]"
                         }
                       >
-                        <div
-                          onClick={() =>
-                            updateCompletion(
-                              name,
-                              todo.description,
-                              String(!todo.completed)
-                            )
-                          }
-                          className="w-[20%] cursor-pointer flex justify-center items-center border-b-[1px] border-gray-300 rounded-t-md  h-12"
-                        >
-                          <div
-                            className={
-                              todo.completed === false
-                                ? styles.complete
-                                : "bg-check w-[20px] hover:opacity-50 h-[20px] flex justify-center items-center rounded-full"
-                            }
-                          >
-                            <img
-                              className="bg-transparent"
-                              src="/images/icon-check.svg"
-                              alt=""
-                            />
+                        {canEdit && index === editIndex ? (
+                          <div className="flex justify-center rounded-l-md items-center w-[20%]">
+                            <div
+                              onClick={() => setEditCompleted(!editCompleted)}
+                              className={styles.circleOuter}
+                            >
+                              <div
+                                className={
+                                  editCompleted === false
+                                    ? styles.circleInner
+                                    : "bg-check w-[18px] hover:opacity-50 h-[18px] flex justify-center items-center rounded-full"
+                                }
+                              >
+                                <img
+                                  className="bg-transparent"
+                                  src="/images/icon-check.svg"
+                                  alt=""
+                                />
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                        <input
-                          value={todo.description}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            setPostData({
-                              ...postData,
-                              description: e.target.value,
-                            })
-                          }
-                          className={
-                            todo.completed
-                              ? "w-[60%] line-through text-gray-400 outline-none"
-                              : "w-[60%] outline-none"
-                          }
-                          type="text"
-                          readOnly={true}
-                        />
+                        ) : (
+                          <div className="flex justify-center rounded-l-md items-center w-[20%]">
+                            <div
+                              onClick={() =>
+                                updateCompletion(
+                                  name,
+                                  todo.description,
+                                  String(!todo.completed)
+                                )
+                              }
+                              className={styles.circleOuter}
+                            >
+                              <div
+                                className={
+                                  todo.completed === false
+                                    ? styles.circleInner
+                                    : "bg-check w-[18px] hover:opacity-50 h-[18px] flex justify-center items-center rounded-full"
+                                }
+                              >
+                                <img
+                                  className="bg-transparent"
+                                  src="/images/icon-check.svg"
+                                  alt=""
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        {canEdit && index === editIndex ? (
+                          <input
+                            value={editedText}
+                            onChange={(
+                              e: React.ChangeEvent<HTMLInputElement>
+                            ) => setEditedText(e.target.value)}
+                            placeholder="Create a todo..."
+                            className="w-[60%] text-black outline-none"
+                            type="text"
+                          />
+                        ) : (
+                          <input
+                            value={todo.description}
+                            onChange={(
+                              e: React.ChangeEvent<HTMLInputElement>
+                            ) =>
+                              setPostData({
+                                ...postData,
+                                description: e.target.value,
+                              })
+                            }
+                            placeholder="Create a todo..."
+                            className={
+                              todo.completed
+                                ? "w-[60%] line-through text-gray-400 outline-none"
+                                : "w-[60%] text-black outline-none"
+                            }
+                            type="text"
+                            readOnly={true}
+                          />
+                        )}
+                        {canEdit && index === editIndex ? (
+                          <div className="flex justify-center items-center">
+                            <button
+                              onClick={() =>
+                                updateDescription(todo.description, editedText)
+                              }
+                              className="flex justify-center items-center p-1 text-sm text-black bg-check rounded-md hover:opacity-50"
+                            >
+                              Update
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex justify-center items-center">
+                            <button
+                              onClick={() =>
+                                enableEdit(todo.description, index)
+                              }
+                              className="flex justify-center items-center p-1 text-sm text-black bg-check rounded-md hover:opacity-50"
+                            >
+                              Edit
+                            </button>
+                          </div>
+                        )}
                         <div
                           onClick={() =>
                             deleteTodo(
@@ -297,46 +452,109 @@ export default function Home({name}:any) {
                             : "flex mx-auto w-[80%] h-12 rounded-t-md border-b-[1px] border-gray-300 relative bottom-[4.5rem]"
                         }
                       >
-                        <div
-                          onClick={() =>
-                            updateCompletion(
-                              name,
-                              todo.description,
-                              String(!todo.completed)
-                            )
-                          }
-                          className="w-[20%] cursor-pointer flex justify-center items-center border-b-[1px] border-gray-300 rounded-t-md  h-12"
-                        >
-                          <div
-                            className={
-                              todo.completed === false
-                                ? styles.complete
-                                : "bg-check w-[20px] hover:opacity-50 h-[20px] flex justify-center items-center rounded-full"
-                            }
-                          >
-                            <img
-                              className="bg-transparent"
-                              src="/images/icon-check.svg"
-                              alt=""
-                            />
+                        {canEdit && index === editIndex ? (
+                          <div className="flex justify-center rounded-l-md items-center w-[20%]">
+                            <div
+                              onClick={() => setEditCompleted(!editCompleted)}
+                              className={styles.circleOuter}
+                            >
+                              <div
+                                className={
+                                  editCompleted === false
+                                    ? styles.circleInner
+                                    : "bg-check w-[18px] hover:opacity-50 h-[18px] flex justify-center items-center rounded-full"
+                                }
+                              >
+                                <img
+                                  className="bg-transparent"
+                                  src="/images/icon-check.svg"
+                                  alt=""
+                                />
+                              </div>
+                            </div>
                           </div>
-                        </div>
-                        <input
-                          value={todo.description}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            setPostData({
-                              ...postData,
-                              description: e.target.value,
-                            })
-                          }
-                          className={
-                            todo.completed
-                              ? "w-[60%] line-through text-gray-400 outline-none"
-                              : "w-[60%] outline-none"
-                          }
-                          type="text"
-                          readOnly={true}
-                        />
+                        ) : (
+                          <div className="flex justify-center rounded-l-md items-center w-[20%]">
+                            <div
+                              onClick={() =>
+                                updateCompletion(
+                                  name,
+                                  todo.description,
+                                  String(!todo.completed)
+                                )
+                              }
+                              className={styles.circleOuter}
+                            >
+                              <div
+                                className={
+                                  todo.completed === false
+                                    ? styles.circleInner
+                                    : "bg-check w-[18px] hover:opacity-50 h-[18px] flex justify-center items-center rounded-full"
+                                }
+                              >
+                                <img
+                                  className="bg-transparent"
+                                  src="/images/icon-check.svg"
+                                  alt=""
+                                />
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                        {canEdit && index === editIndex ? (
+                          <input
+                            value={editedText}
+                            onChange={(
+                              e: React.ChangeEvent<HTMLInputElement>
+                            ) => setEditedText(e.target.value)}
+                            placeholder="Create a todo..."
+                            className="w-[60%] text-black outline-none"
+                            type="text"
+                          />
+                        ) : (
+                          <input
+                            value={todo.description}
+                            onChange={(
+                              e: React.ChangeEvent<HTMLInputElement>
+                            ) =>
+                              setPostData({
+                                ...postData,
+                                description: e.target.value,
+                              })
+                            }
+                            placeholder="Create a todo..."
+                            className={
+                              todo.completed
+                                ? "w-[60%] line-through text-gray-400 outline-none"
+                                : "w-[60%] text-black outline-none"
+                            }
+                            type="text"
+                            readOnly={true}
+                          />
+                        )}
+                        {canEdit && index === editIndex ? (
+                          <div className="flex justify-center items-center">
+                            <button
+                              onClick={() =>
+                                updateDescription(todo.description, editedText)
+                              }
+                              className="flex justify-center items-center p-1 text-sm text-black bg-check rounded-md hover:opacity-50"
+                            >
+                              Update
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex justify-center items-center">
+                            <button
+                              onClick={() =>
+                                enableEdit(todo.description, index)
+                              }
+                              className="flex justify-center items-center p-1 text-sm text-black bg-check rounded-md hover:opacity-50"
+                            >
+                              Edit
+                            </button>
+                          </div>
+                        )}
                         <div
                           onClick={() =>
                             deleteTodo(
@@ -402,16 +620,11 @@ export default function Home({name}:any) {
                     Completed
                   </h1>
                 </div>
-                <div
-                  className="flex justify-center text-gray-400 pb-4"
-                >
+                <div className="flex justify-center text-gray-400 pb-4">
                   Drag and drop to reorder list
                 </div>
-                <div
-                  onClick={() => signOut()}
-                  className="flex justify-center cursor-pointer"
-                >
-                  Sign out
+                <div className="flex justify-center cursor-pointer">
+                  <p onClick={() => signOut()}> Sign out</p>
                 </div>
               </>
             )}
@@ -456,10 +669,11 @@ export default function Home({name}:any) {
    const session = await getSession(context);
    const username = session?.user?.name as string;
    const newUsername = username?.replace(/\s+/g, "_");
-
    return {
      props: {
        name: newUsername ?? ""
      },
    };
  }
+
+
